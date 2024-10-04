@@ -23,18 +23,20 @@ class Player(models.Model):
     level = models.PositiveSmallIntegerField(default=1)
     boost = models.ForeignKey('Boost', on_delete=models.SET_DEFAULT,
                               default=get_default_boost, related_name='boost')
-
+    def new_day_start(self):
+        self.is_joined_today = False
     def give_points_for_joining(self):
         # Начисление очков за регулярные посещения
         if self.is_joined_today is False:
             without_active = timezone.now() - self.date_joined
             if without_active.days < 2:
-                self.points += POINTS_FOR_JOIN
+                self.points += int(POINTS_FOR_JOIN * self.boost.factor)
             self.is_joined_today = True
 
     def update_level(self):
         # В этом примере за каждые 1000 очков даётся уровень
         self.level = self.points//1000 + 1
+        self.update_boost_for_level()
 
     def update_boost_for_level(self):
         # Обновление бустера с увеличением уровня
